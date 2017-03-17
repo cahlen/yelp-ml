@@ -31,3 +31,21 @@ city: String
 name: String
 business_id: String
 review_count: Integer
+
+df dtypes
+address         object
+attributes      object
+business_id     object
+categories      object
+city            object
+hours           object
+is_open         int64
+latitude        float64
+longitude       float64
+name            object
+neighborhood    object
+postal_code     object
+review_count    object
+stars           float64
+state           object
+type            object
