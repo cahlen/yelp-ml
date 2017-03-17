@@ -2,7 +2,6 @@
 # 
 # Reformat Yelp data to valid json file
 
-import sys
 import json
 import codecs
 
@@ -12,7 +11,6 @@ def open_data_file(filename):
     return open(filename, "r")
 
 def main():
-    # Open data file and temporary file
     f = open_data_file(DATA_FILE)
     data = []
     with codecs.open("data/valid_json.json", "rU", "utf-8") as valid:
