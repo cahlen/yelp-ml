@@ -2,46 +2,67 @@
 
 import pandas as pd
 import os, sys
-import numpy
-from sklearn.feature_selection import SelectKBest
-from sklearn.feature_selection import chi2
-from sklearn.preprocessing import OneHotEncoder
+import numpy as np
+from sklearn import preprocessing, svm, cross_validation, tree, metrics
+#from sklearn.ensemble import ske
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+from sklearn.ensemble import GradientBoostingClassifier
 
+np.random.seed(0)
 
-def one_hot(df, cols):
-    for each in cols:
-        dummies = pd.get_dummies(df[each], prefix=each, drop_first=False)
-        df = pd.concat([df, dummies], axis=1)
-    return df
+def preprocess_data(df, cols):
+    processed_df = df.copy()
+    le = preprocessing.LabelEncoder()
+    processed_df[cols] = df[cols].apply(le.fit_transform)
+    return processed_df
 
 def main():
-    names = ['address', 'attributes',
-            'city', 'hours', 'latitude',
-            'longitude', 'neighborhood', 'postal_code',
-            'review_count', 'stars', 'state','type',
-            'is_open']
+    categorical_cols = ['neighborhood','type','state', 'city','name']
+    names = ['neighborhood', 'type', 'state', 'city', 'name',
+             'stars', 'postal_code', 'latitude', 'longitude', 'review_count', 'is_open']
 
-    categorical_cols = ['address', 'attributes', 'city', 'hours',
-                        'neighborhood', 'postal_code', 'state', 'type']
-    
+    # Get json from file into dataframe
     cwd = os.getcwd()
-    df = pd.read_json(path_or_buf=cwd+"/data/valid_json.json")
-    onehotdf = one_hot(df, categorical_cols) 
-    new_df = onehotdf.filter(names, axis=1)
+    raw_df = pd.read_json(path_or_buf=cwd+"/data/valid_json.json")
 
-    print(new_df.head(1))
-    array = new_df.values
-    X = array[:,0:12]
-    y = array[:,12]
+    # Drop rows where zipcode is not an integer
+    filtered_df = raw_df[raw_df.postal_code.apply(lambda x: x.isnumeric())]
 
-    test = SelectKBest(score_func=chi2, k=4)
-    fit = test.fit(X,y)
+    # Get sample of rows
+    df = filtered_df.filter(names, axis=1) #.sample(n=100000)
 
-    numpy.set_printoptions(precision=3)
-    print(fit.scores_)
-    features = fit.transform(X)
+    # Convert categorical columns
+    df[categorical_cols] = df[categorical_cols].apply(lambda x: x.astype('category'))
+    df[['postal_code']] = df[['postal_code']].apply(lambda x: x.astype('int64'))
 
-    print(features.head(2))
+    df = preprocess_data(df, categorical_cols)
+
+    X = df.drop(['is_open'], axis=1).values
+    y = df['is_open'].values
+
+    # Cross validate
+    X_train, X_test, y_train, y_test =cross_validation.train_test_split(X,y,test_size=0.3)
+
+    # Decision Tree
+    clf_dt = tree.DecisionTreeClassifier(max_depth=10)
+    clf_dt.fit(X_train, y_train)
+    print("Decision Tree: " + str(clf_dt.score(X_test,y_test)))
+
+    # Random Forest
+    clf_rf = RandomForestClassifier(n_estimators=50)
+    clf_rf.fit(X_train, y_train)
+    scores = cross_val_score(clf_rf, X_train, y_train)
+    print("Random Forest: " + str(clf_rf.score(X_test,y_test)))
+    print("Cross Validation Mean: " + str(scores.mean()))
+
+    # Gradient Boosting Classifier
+    clf_gb = GradientBoostingClassifier(n_estimators=200, learning_rate=0.1)
+    clf_gb.fit(X_train, y_train)
+    scores = cross_val_score(clf_gb, X_train, y_train)
+    print("Gradient Boosting: " + str(clf_gb.score(X_test,y_test)))
+    print("Cross Validation Mean: " + str(scores.mean()))
+
 
 if __name__ == "__main__":
     main()
