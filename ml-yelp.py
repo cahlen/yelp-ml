@@ -17,7 +17,7 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2 
 from sklearn.preprocessing import MinMaxScaler
 
-from sklearn.pipeline import Pipeline
+import matplotlib.pylab as plt
 
 # Random seed for models
 np.random.seed(0)
@@ -47,6 +47,19 @@ def custom_processing(df):
 def load_data():
     cwd = os.getcwd()
     return pd.read_json(path_or_buf=cwd+"/data/valid_json.json")
+
+def plot_scores(data_dict):
+    lists = sorted(data_dict.items())
+    x_temp, y = zip(*lists)
+    x = np.arange(len(x_temp))
+    #print(x)
+    #print(y)
+    plt.bar(x, y, align='center', alpha=0.5)
+    plt.xticks(x, x_temp, rotation=45)
+    #plt.gcf().subplots_adjust(bottom=0.15)
+    plt.ylim(0.8520,0.8550)
+    plt.tight_layout()
+    plt.show()
 
 def main():
     raw_df = load_data()
@@ -80,12 +93,16 @@ def main():
     X_train, X_test, y_train, y_test = cross_validation.train_test_split(X_pre_split,
             y_pre_split,test_size=0.3)
 
+    # Plot data dict
+    plot_data = {}
+
     # Decision Tree
     clf_dt = tree.DecisionTreeClassifier(max_depth=10)
     clf_dt.fit(X_train, y_train)
     scores = cross_val_score(clf_dt, X_train, y_train)
     print("Decision Tree: " + str(clf_dt.score(X_test ,y_test)))
     print("Cross Validation Mean: " + str(scores.mean()) + "\n")
+    plot_data["Decision Tree"] = scores.mean()
 
     # Random Forest
     clf_rf = RandomForestClassifier(n_estimators=50)
@@ -93,6 +110,7 @@ def main():
     scores = cross_val_score(clf_rf, X_train, y_train)
     print("Random Forest: " + str(clf_rf.score(X_test,y_test)))
     print("Cross Validation Mean: " + str(scores.mean()) + "\n")
+    plot_data["Random Forest"] = scores.mean()
 
     # Gradient Boosting Classifier
     clf_gb = GradientBoostingClassifier(n_estimators=200, learning_rate=0.1)
@@ -100,6 +118,7 @@ def main():
     scores = cross_val_score(clf_gb, X_train, y_train)
     print("Gradient Boosting: " + str(clf_gb.score(X_test,y_test)))
     print("Cross Validation Mean: " + str(scores.mean()) + "\n")
+    plot_data["GBoost"] = scores.mean()
 
     # Naive Bayes Classifiers
     
@@ -109,6 +128,7 @@ def main():
     scores = cross_val_score(clf_gnb, X_train, y_train)
     print("Gaussian NB: " + str(clf_gnb.score(X_test,y_test)))
     print("Cross Validation Mean: " + str(scores.mean()) + "\n")
+    plot_data["Gaussian NB"] = scores.mean()
    
     # Multinomial NB
     clf_mnb = MultinomialNB()
@@ -116,6 +136,9 @@ def main():
     scores = cross_val_score(clf_mnb, X_train, y_train)
     print("Multinomial NB: " + str(clf_mnb.score(X_test,y_test)))
     print("Cross Validation Mean: " + str(scores.mean()) + "\n")
+    plot_data["Multinomial NB"] = scores.mean()
+
+    plot_scores(plot_data)
 
 if __name__ == "__main__":
     main()
