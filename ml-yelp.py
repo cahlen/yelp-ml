@@ -1,13 +1,17 @@
 #!/usr/bin/env python
 
-import pandas as pd
 import os, sys
+
+import pandas as pd
 import numpy as np
+
 from sklearn import preprocessing, svm, cross_validation, tree, metrics
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import cross_val_score
+from sklearn.naive_bayes import GaussianNB
+from sklearn.naive_bayes import MultinomialNB
 
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2 
@@ -39,8 +43,6 @@ def custom_processing(df):
     named_df[categorical_cols] = named_df[categorical_cols].apply(lambda x: x.astype('category'))
     named_df[['postal_code']] = named_df[['postal_code']].apply(lambda x: x.astype('int64'))
     return named_df
-
-
 
 def load_data():
     cwd = os.getcwd()
@@ -97,6 +99,22 @@ def main():
     clf_gb.fit(X_train, y_train)
     scores = cross_val_score(clf_gb, X_train, y_train)
     print("Gradient Boosting: " + str(clf_gb.score(X_test,y_test)))
+    print("Cross Validation Mean: " + str(scores.mean()) + "\n")
+
+    # Naive Bayes Classifiers
+    
+    # Gaussian NB
+    clf_gnb = GaussianNB()
+    clf_gnb.fit(X_train, y_train)
+    scores = cross_val_score(clf_gnb, X_train, y_train)
+    print("Gaussian NB: " + str(clf_gnb.score(X_test,y_test)))
+    print("Cross Validation Mean: " + str(scores.mean()) + "\n")
+   
+    # Multinomial NB
+    clf_mnb = MultinomialNB()
+    clf_mnb.fit(X_train, y_train)
+    scores = cross_val_score(clf_mnb, X_train, y_train)
+    print("Multinomial NB: " + str(clf_mnb.score(X_test,y_test)))
     print("Cross Validation Mean: " + str(scores.mean()) + "\n")
 
 if __name__ == "__main__":
